@@ -15,6 +15,7 @@ module Fedex
             :label_stock_type => 'PAPER_LETTER'
         }
         @label_specification.merge! options[:label_specification] if options[:label_specification]
+        @special_service_types= options[:special_service_types] # array of allowed service type options
       end
 
       # Sends post request to Fedex web service and parse the response.
@@ -48,9 +49,20 @@ module Fedex
           add_shipping_charges_payment(xml)
           add_customs_clearance(xml) if @customs_clearance
           add_custom_components(xml)
+          add_special_services_request(xml)
           xml.RateRequestTypes "ACCOUNT"
           add_packages(xml)
         }
+      end
+
+      def add_special_services_request(xml)
+        if @special_service_types && @special_service_types.count > 0
+          xml.SpecialServicesRequested{
+            @special_service_types.each do |special_service_type|
+              xml.SpecialServiceTypes special_service_type
+            end
+          }
+        end
       end
 
       # Hook that can be used to add custom parts.

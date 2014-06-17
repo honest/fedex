@@ -3,6 +3,10 @@ require 'fedex/request/base'
 module Fedex
   module Request
     class Rate < Base
+      def initialize(credentials, options={})
+        super(credentials, options)
+        @special_service_type= options[:special_service_type]
+      end
       # Sends post request to Fedex web service and parse the response, a Rate object is created if the response is successful
       def process_request
         api_response = self.class.post(api_url, :body => build_xml)
@@ -38,6 +42,18 @@ module Fedex
         }
       end
 
+      def add_special_services_request(xml)
+        if @special_service_type
+          xml.SpecialServicesRequested{
+            xml.ShipmentSpecialServiceType @special_service_type
+          }
+        end
+      end
+
+      def add_variable_service_option_type(xml)
+        xml.VariableOptionsServiceOptionType @special_service_type if @special_service_type && @special_service_type == 'SATURDAY_DELIVERY'
+      end
+
       # Build xml Fedex Web Service request
       def build_xml
         ns = "http://fedex.com/ws/rate/v#{service[:version]}"
@@ -46,8 +62,10 @@ module Fedex
             add_web_authentication_detail(xml)
             add_client_detail(xml)
             add_version(xml)
+            add_variable_service_option_type(xml)
             xml.ReturnTransitAndCommit true
             add_requested_shipment(xml)
+            add_special_services_request(xml)
           }
         end
         builder.doc.root.to_xml
