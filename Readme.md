@@ -68,10 +68,10 @@ packages << {
 ```
 
 By default packaging type is "YOUR PACKAGING" and the drop off type is "REGULAR PICKUP".
-If you need something different you can pass an extra hash for shipping details
+If you need something different you can pass an extra hash for shipping options
 
 ```ruby
-shipping_details = {
+shipping_options = {
   :packaging_type => "YOUR_PACKAGING",
   :drop_off_type => "REGULAR_PICKUP"
 }
@@ -98,7 +98,7 @@ rate = fedex.rate(:shipper=>shipper,
                   :recipient => recipient,
                   :packages => packages,
                   :service_type => "FEDEX_GROUND",
-                  :shipping_details => shipping_details)
+                  :shipping_options => shipping_options)
 ```
 
 Fedex provides multiple total values; `total_net_charge` is the final amount you are looking for.
@@ -123,7 +123,7 @@ ship = fedex.ship(:shipper=>shipper,
                   :recipient => recipient,
                   :packages => packages,
                   :service_type => "FEDEX_GROUND",
-                  :shipping_details => shipping_details)
+                  :shipping_options => shipping_options)
 puts ship[:completed_shipment_detail][:operational_detail] [:transit_time]
 ```
 Above code will give you the transit time.
@@ -138,7 +138,7 @@ label = fedex.label(:filename => "my_dir/example.pdf",
                     :recipient => recipient,
                     :packages => packages,
                     :service_type => "FEDEX_GROUND",
-                    :shipping_details => shipping_details)
+                    :shipping_options => shipping_options)
 ```
 
 ### ** Generate a shipping label in any available format **
@@ -156,7 +156,7 @@ label = fedex.label(:filename => "my_dir/example_epl2.pcx",
                     :recipient => recipient,
                     :packages => packages,
                     :service_type => "FEDEX_GROUND",
-                    :shipping_details => shipping_details,
+                    :shipping_options => shipping_options,
                     :label_specification => example_spec)
 ```
 ### ** Storing a label on Amazon S3 with Paperclip **
@@ -169,7 +169,7 @@ label = fedex.label(:filename => "tmp/example_label.pdf",
                     :recipient => recipient,
                     :packages => packages,
                     :service_type => "FEDEX_GROUND",
-                    :shipping_details => shipping_details,
+                    :shipping_options => shipping_options,
                     :label_specification => example_spec)
 ```
 
@@ -240,15 +240,18 @@ Fedex::Shipment::DROP_OFF_TYPES
 ````
 
 # Contributors:
-- [jazminschroeder](http://github.com/jazminschroeder) (Jazmin Schroeder)
-- [parndt](https://github.com/parndt) (Philip Arndt)
-- [mmell](https://github.com/mmell) (Michael Mell)
-- [jordanbyron](https://github.com/jordanbyron) (Jordan Byron)
-- [geermc4](https://github.com/geermc4) (German Garcia)
+- [jazminschroeder] (http://github.com/jazminschroeder) (Jazmin Schroeder)
+- [parndt] (https://github.com/parndt) (Philip Arndt)
+- [mmell] (https://github.com/mmell) (Michael Mell)
+- [jordanbyron] (https://github.com/jordanbyron) (Jordan Byron)
+- [geermc4] (https://github.com/geermc4) (German Garcia)
 - [janders223] (https://github.com/janders223) (Jim Anders)
 - [jlambert121] (https://github.com/jlambert121) (Justin Lambert)
 - [sborsje] (https://github.com/sborsje) (Stefan Borsje)
 - [bradediger] (https://github.com/bradediger) (Brad Ediger)
+- [yevgenko] (https://github.com/yevgenko) (Yevgeniy Viktorov)
+- [smartacus] (https://github.com/smartacus) (Michael Lippold)
+- [jonathandean] (https://github.com/jonathandean) (Jonathan Dean)
 
 # Copyright/License:
 Copyright 2011 [Jazmin Schroeder](http://jazminschroeder.com)

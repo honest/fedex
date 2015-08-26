@@ -42,11 +42,20 @@ module Fedex
       #
       # return a Fedex::Request::Base object
       def initialize(credentials, options={})
-        requires!(options, :shipper, :recipient, :packages, :service_type)
+        requires!(options, :shipper, :recipient, :packages)
         @credentials = credentials
-        @shipper, @recipient, @packages, @service_type, @customs_clearance, @debug = options[:shipper], options[:recipient], options[:packages], options[:service_type], options[:customs_clearance], options[:debug]
+        @shipper = options[:shipper]
+        @recipient = options[:recipient]
+        @packages  = options[:packages]
+        @service_type = options[:service_type]
+        @customs_clearance = options[:customs_clearance]
+        @smartpost_details = options[:smartpost_details]
         @debug = ENV['DEBUG'] == 'true'
         @shipping_options =  options[:shipping_options] ||={}
+        # Expects hash with addr and port
+        if options[:http_proxy]
+          self.class.http_proxy options[:http_proxy][:host], options[:http_proxy][:port]
+        end
       end
 
       # Sends post request to Fedex web service and parse the response.
@@ -177,6 +186,12 @@ module Fedex
         @packages.each do |package|
           xml.RequestedPackageLineItems{
             xml.GroupPackageCount 1
+            if package[:insured_value]
+              xml.InsuredValue{
+                xml.Currency package[:insured_value][:currency]
+                xml.Amount package[:insured_value][:amount]
+              }
+            end
             xml.Weight{
               xml.Units package[:weight][:units]
               xml.Value package[:weight][:value]
