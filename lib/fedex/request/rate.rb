@@ -9,19 +9,15 @@ module Fedex
         puts api_response if @debug
         response = parse_response(api_response)
         if success?(response)
-          # Speed is of the esssence - the commented out code doesn't reply the format that we're looking for, but
-          # it's taking too long to debug it, so we'll use an older version for now - ALB
-          #rate_reply_details = response[:rate_reply][:rate_reply_details] || []
-          #rate_reply_details = [rate_reply_details] if rate_reply_details.is_a?(Hash)
+          rate_reply_details = response[:rate_reply][:rate_reply_details] || []
+          rate_reply_details = [rate_reply_details] if rate_reply_details.is_a?(Hash)
 
-          #rate_reply_details.map do |rate_reply|
-          #  rate_details = [rate_reply[:rated_shipment_details]].flatten.first[:shipment_rate_detail]
-          #  rate_details.merge!(service_type: rate_reply[:service_type])
-          #  Fedex::Rate.new(rate_details)
-          #end
-
-          rate_details = [response[:rate_reply][:rate_reply_details][:rated_shipment_details]].flatten.first[:shipment_rate_detail]
-          [ Fedex::Rate.new(rate_details.merge(response_details: response[:rate_reply])) ]
+          rate_reply_details.map do |rate_reply|
+            rate_details = [rate_reply[:rated_shipment_details]].flatten.first[:shipment_rate_detail]
+            rate_details.merge!(service_type: rate_reply[:service_type])
+            rate_details.merge!(response_details: rate_reply)
+            Fedex::Rate.new(rate_details)
+          end
         else
           error_message = if response[:rate_reply]
             [response[:rate_reply][:notifications]].flatten.first[:message]
