@@ -40,8 +40,17 @@ module Fedex
           add_recipient(xml)
           add_shipping_charges_payment(xml)
           add_customs_clearance(xml) if @customs_clearance
+          add_smartpost_details(xml) if @smartpost_details
           xml.RateRequestTypes "ACCOUNT"
           add_packages(xml)
+        }
+      end
+
+      def add_smartpost_details(xml)
+        xml.SmartPostDetail {
+          xml.Indicia @smartpost_details[:indicia]
+          xml.AncillaryEndorsement @smartpost_details[:ancillary_endorsement]
+          xml.HubId @smartpost_details[:hub_id]
         }
       end
 
