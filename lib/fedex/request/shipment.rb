@@ -7,7 +7,7 @@ module Fedex
 
       def initialize(credentials, options={})
         super
-        requires! options
+        requires!(options, :service_type)
         # Label specification is required even if we're not using it.
         @label_specification = {
             :label_format_type => 'COMMON2D',
@@ -39,14 +39,16 @@ module Fedex
       # Add information for shipments
       def add_requested_shipment(xml)
         xml.RequestedShipment{
-          xml.ShipTimestamp Time.now.utc.iso8601(2)
+          xml.ShipTimestamp @shipping_options[:ship_timestamp] ||= Time.now.utc.iso8601(2)
           xml.DropoffType @shipping_options[:drop_off_type] ||= "REGULAR_PICKUP"
           xml.ServiceType service_type
           xml.PackagingType @shipping_options[:packaging_type] ||= "YOUR_PACKAGING"
           add_shipper(xml)
           add_recipient(xml)
           add_shipping_charges_payment(xml)
+          add_special_services(xml) if @shipping_options[:return_reason]
           add_customs_clearance(xml) if @customs_clearance
+          add_smartpost_details(xml) if @smartpost_details
           add_custom_components(xml)
           xml.RateRequestTypes "ACCOUNT"
           add_packages(xml)
@@ -64,6 +66,26 @@ module Fedex
           xml.LabelFormatType @label_specification[:label_format_type]
           xml.ImageType @label_specification[:image_type]
           xml.LabelStockType @label_specification[:label_stock_type]
+        }
+      end
+
+      def add_special_services(xml)
+        xml.SpecialServicesRequested {
+          xml.SpecialServiceTypes "RETURN_SHIPMENT"
+          xml.ReturnShipmentDetail {
+            xml.ReturnType "PRINT_RETURN_LABEL"
+            xml.Rma {
+              xml.Reason "#{@shipping_options[:return_reason]}"
+            }
+          }
+        }
+      end
+
+      def add_smartpost_details(xml)
+        xml.SmartPostDetail {
+          xml.Indicia @smartpost_details[:indicia]
+          xml.AncillaryEndorsement @smartpost_details[:ancillary_endorsement]
+          xml.HubId @smartpost_details[:hub_id]
         }
       end
 
@@ -89,7 +111,7 @@ module Fedex
       # Build xml Fedex Web Service request
       def build_xml
         builder = Nokogiri::XML::Builder.new do |xml|
-          xml.ProcessShipmentRequest(:xmlns => "http://fedex.com/ws/ship/v10"){
+          xml.ProcessShipmentRequest(:xmlns => "http://fedex.com/ws/ship/v#{service[:version]}"){
             add_web_authentication_detail(xml)
             add_client_detail(xml)
             add_version(xml)
@@ -102,7 +124,7 @@ module Fedex
 
 
       def service
-        { :id => 'ship', :version => 10 }
+        { :id => 'ship', :version => 13 }
       end
 
       # Successful request

@@ -22,11 +22,13 @@ describe Fedex::Request::Shipment do
       { :packaging_type => "YOUR_PACKAGING", :drop_off_type => "REGULAR_PICKUP" }
     end
 
+
+    let(:filename) {
+      require 'tmpdir'
+     p File.join(Dir.tmpdir, "label#{rand(15000)}.pdf")
+    }
+
     context "domestic shipment", :vcr do
-      let(:filename) {
-        require 'tmpdir'
-        File.join(Dir.tmpdir, "label#{rand(15000)}.pdf")
-      }
       let(:options) do
         {:shipper => shipper, :recipient => recipient, :packages => packages, :service_type => "FEDEX_GROUND", :filename => filename}
       end
@@ -38,6 +40,37 @@ describe Fedex::Request::Shipment do
 
         @shipment.class.should_not == Fedex::RateError
       end
+    end
+
+    context 'without service_type specified', :vcr do
+      let(:options) do
+        {:shipper => shipper, :recipient => recipient, :packages => packages, :filename => filename}
+      end
+
+      it 'raises error' do
+        expect {
+          @shipment = fedex.ship(options)
+        }.to raise_error('Missing Required Parameter service_type')
+      end
+
+    end
+
+    context 'smartpost', :vcr do
+      let(:smartpost_details) do
+        { :indicia => "PARCEL_SELECT",
+          :ancillary_endorsement => "RETURN_SERVICE",
+          :hub_id => "5531"}
+      end
+
+      let(:options) do
+        {:shipper => shipper, :recipient => recipient, :packages => packages, :filename => filename, :service_type => "SMART_POST", :smartpost_details => smartpost_details, debug: true}
+      end
+
+      it "returns valid shipment" do
+        shipment = fedex.ship(options)
+        shipment.class.should_not == Fedex::RateError
+      end
+
     end
 
   end

@@ -9,8 +9,15 @@ module Fedex
         puts api_response if @debug
         response = parse_response(api_response)
         if success?(response)
-          rate_details = [response[:rate_reply][:rate_reply_details][:rated_shipment_details]].flatten.first[:shipment_rate_detail]
-          Fedex::Rate.new(rate_details.merge(response_details: response[:rate_reply]))
+          rate_reply_details = response[:rate_reply][:rate_reply_details] || []
+          rate_reply_details = [rate_reply_details] if rate_reply_details.is_a?(Hash)
+
+          rate_reply_details.map do |rate_reply|
+            rate_details = [rate_reply[:rated_shipment_details]].flatten.first[:shipment_rate_detail]
+            rate_details.merge!(service_type: rate_reply[:service_type])
+            rate_details.merge!(response_details: rate_reply)
+            Fedex::Rate.new(rate_details)
+          end
         else
           error_message = if response[:rate_reply]
             [response[:rate_reply][:notifications]].flatten.first[:message]
@@ -27,14 +34,23 @@ module Fedex
       def add_requested_shipment(xml)
         xml.RequestedShipment{
           xml.DropoffType @shipping_options[:drop_off_type] ||= "REGULAR_PICKUP"
-          xml.ServiceType service_type
+          xml.ServiceType service_type if service_type
           xml.PackagingType @shipping_options[:packaging_type] ||= "YOUR_PACKAGING"
           add_shipper(xml)
           add_recipient(xml)
           add_shipping_charges_payment(xml)
           add_customs_clearance(xml) if @customs_clearance
+          add_smartpost_details(xml) if @smartpost_details
           xml.RateRequestTypes "ACCOUNT"
           add_packages(xml)
+        }
+      end
+
+      def add_smartpost_details(xml)
+        xml.SmartPostDetail {
+          xml.Indicia @smartpost_details[:indicia]
+          xml.AncillaryEndorsement @smartpost_details[:ancillary_endorsement]
+          xml.HubId @smartpost_details[:hub_id]
         }
       end
 
